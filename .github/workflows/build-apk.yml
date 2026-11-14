@@ -14,23 +14,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Android project
-        run: |
-          unzip -o StudyPilot_GitHub_Project.zip -d extracted
-          find extracted -name gradlew -type f
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
+      - name: Extract project
+        run: |
+          unzip -o StudyPilot_GitHub_Project.zip -d extracted
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Find project
+        run: |
+          PROJECT_DIR=$(dirname "$(find extracted -name settings.gradle.kts -type f | head -n 1)")
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Project settings file not found"
+            exit 1
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
       - name: Build APK
         run: |
-          PROJECT_DIR=$(dirname "$(find extracted -name gradlew -type f | head -n 1)")
-          chmod +x "$PROJECT_DIR/gradlew"
           cd "$PROJECT_DIR"
-          ./gradlew assembleDebug
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
