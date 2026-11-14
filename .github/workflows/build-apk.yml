@@ -1,0 +1,39 @@
+name: Build Habit Pilot APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract Android project
+        run: |
+          unzip -o StudyPilot_GitHub_Project.zip -d extracted
+          find extracted -name gradlew -type f
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build APK
+        run: |
+          PROJECT_DIR=$(dirname "$(find extracted -name gradlew -type f | head -n 1)")
+          chmod +x "$PROJECT_DIR/gradlew"
+          cd "$PROJECT_DIR"
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Habit-Pilot-APK
+          path: extracted/**/build/outputs/apk/debug/*.apk
